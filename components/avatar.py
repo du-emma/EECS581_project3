@@ -1,6 +1,6 @@
 # Owner: Arpa
 # Draws the avatar the player chose. Shown on the store page, positioned at the current aisle.
-# Style: chibi grocery worker — big head, thick dark outlines, green cap and apron.
+# Style: chibi grocery worker — big head, thick dark outlines, green apron.
 #
 # Usage (e.g. from store_page.py):
 #     from components.avatar import draw_avatar
@@ -16,8 +16,6 @@ SCALE = 3
 STROKE = 3.5  # outline thickness, in grid units
 
 INK = (45, 38, 48)               # outlines + eyes
-CAP = (62, 135, 72)              # green cap
-CAP_DARK = (48, 110, 58)
 APRON = (52, 118, 62)            # green apron
 APRON_DARK = (40, 96, 50)
 TEE = (250, 250, 250)            # white t-shirt
@@ -66,7 +64,7 @@ def _render(avatar):
     elif style == "ponytail":
         _shape(surf, "ellipse", hair, 18, 100, 46, 112)
     elif style == "bun":
-        _shape(surf, "ellipse", hair, 12, 50, 50, 50)
+        _shape(surf, "ellipse", hair, 54, 20, 50, 46)      # bun on top of the head
 
     # 2. Legs and shoes
     _shape(surf, "rect", PANTS, 70, 222, 60, 48, radius=6)
@@ -87,23 +85,18 @@ def _render(avatar):
     _line(surf, APRON, (122, 156), (122, 174), 8)
     pygame.draw.rect(surf, APRON_DARK, _rect(88, 188, 24, 16), width=_u(2), border_radius=_u(3))
 
-    # 5. Ears, then the head
+    # 5. Top of the hair (behind the head), then ears, then the head
+    _shape(surf, "ellipse", hair, 32, 40, 136, 112)
     _shape(surf, "ellipse", skin, 30, 112, 24, 28)
     _shape(surf, "ellipse", skin, 146, 112, 24, 28)
     _shape(surf, "ellipse", skin, 40, 56, 120, 114)
 
-    # 6. Hair around the face: side locks + bangs under the cap
-    lock_h = 72 if style in ("long", "bob") else 36
-    pygame.draw.rect(surf, hair, _rect(39, 74, 20, lock_h), border_radius=_u(10))
-    pygame.draw.rect(surf, hair, _rect(141, 74, 20, lock_h), border_radius=_u(10))
-    pygame.draw.ellipse(surf, hair, _rect(46, 70, 108, 36))
-
-    # 7. Cap: rounded crown, brim pointing to the right, seam down the middle
-    _shape(surf, "ellipse", CAP, 38, 24, 124, 68)
-    pygame.draw.rect(surf, CAP, _rect(40, 58, 120, 22))   # flatten the bottom of the crown
-    _line(surf, INK, (36, 81), (164, 81), STROKE)
-    _line(surf, CAP_DARK, (100, 28), (100, 78), 2.5)
-    _shape(surf, "ellipse", CAP, 104, 72, 76, 20)          # brim
+    # 6. Hair around the face: side locks + side-swept bangs
+    lock_h = 76 if style in ("long", "bob") else 40
+    pygame.draw.rect(surf, hair, _rect(39, 70, 20, lock_h), border_radius=_u(10))
+    pygame.draw.rect(surf, hair, _rect(141, 70, 20, lock_h), border_radius=_u(10))
+    pygame.draw.ellipse(surf, hair, _rect(46, 50, 110, 44))
+    pygame.draw.ellipse(surf, hair, _rect(40, 56, 62, 50))
 
     # 8. Face: tall oval eyes with a highlight and lash, then a small smile
     for ex, lash in ((78, -1), (122, 1)):

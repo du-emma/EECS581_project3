@@ -19,7 +19,7 @@ Then open the URL Vite prints (usually http://localhost:5173).
 | Arpa | `App.tsx`, `state/GameContext.tsx`, `data/avatars.ts`, `screens/MainMenu.tsx`, `Instructions.tsx`, `Settings.tsx`, `AvatarSelect.tsx`, `components/Avatar.tsx` |
 | Megan | `public/assets/`, `styles/global.css`, `screens/StorePage.tsx`, `components/Button.tsx`, `components/store/HudPlaceholders.tsx` |
 | Ellie | `data/aisles.ts`, `screens/AisleView.tsx`, `components/store/StoreMap.tsx`, `components/store/Aisle.tsx`, `components/aisle/Shelf.tsx` |
-| Serom | `docs/sprint2-artifacts/` |
+| Serom | `docs/` |
 
 `types.ts` is shared — agree on changes as a team.
 

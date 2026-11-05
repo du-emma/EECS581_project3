@@ -18,7 +18,6 @@ STROKE = 3.5  # outline thickness, in grid units
 INK = (45, 38, 48)               # outlines + eyes
 APRON = (52, 118, 62)            # green apron
 APRON_DARK = (40, 96, 50)
-TEE = (250, 250, 250)            # white t-shirt
 PANTS = (38, 36, 42)
 SHOES = (250, 250, 250)
 SMILE = (150, 70, 70)
@@ -55,6 +54,7 @@ def _render(avatar):
     # Draws the avatar back-to-front on a big transparent canvas.
     surf = pygame.Surface((_u(GRID_W), _u(GRID_H)), pygame.SRCALPHA)
     skin, hair, style = avatar["skin"], avatar["hair"], avatar["hair_style"]
+    shirt = avatar["shirt"]
 
     # 1. Hair that hangs behind the head and back
     if style == "long":
@@ -75,15 +75,15 @@ def _render(avatar):
     # 3. Arms (skin), then t-shirt sleeves over the shoulders
     _shape(surf, "rect", skin, 50, 180, 20, 52, radius=10)
     _shape(surf, "rect", skin, 130, 180, 20, 52, radius=10)
-    _shape(surf, "rect", TEE, 48, 160, 28, 32, radius=10)
-    _shape(surf, "rect", TEE, 124, 160, 28, 32, radius=10)
+    _shape(surf, "rect", shirt, 48, 160, 28, 32, radius=10)
+    _shape(surf, "rect", shirt, 124, 160, 28, 32, radius=10)
 
     # 4. T-shirt body and apron with straps + pocket
-    _shape(surf, "rect", TEE, 64, 156, 72, 74, radius=14)
-    _shape(surf, "rect", APRON, 70, 172, 60, 60, radius=8)
-    _line(surf, APRON, (78, 156), (78, 174), 8)
-    _line(surf, APRON, (122, 156), (122, 174), 8)
-    pygame.draw.rect(surf, APRON_DARK, _rect(88, 188, 24, 16), width=_u(2), border_radius=_u(3))
+    _shape(surf, "rect", shirt, 64, 156, 72, 74, radius=14)
+    _shape(surf, "rect", APRON, 78, 188, 44, 44, radius=6)
+    _line(surf, APRON, (82, 160), (82, 190), 5)
+    _line(surf, APRON, (118, 160), (118, 190), 5)
+    pygame.draw.rect(surf, APRON_DARK, _rect(90, 198, 20, 14), width=_u(2), border_radius=_u(3))
 
     # 5. Top of the hair (behind the head), then ears, then the head
     _shape(surf, "ellipse", hair, 32, 40, 136, 112)

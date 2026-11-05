@@ -31,8 +31,16 @@ def draw_avatar(surface, avatar, center, size=60):
     body.midbottom = (x, y + size // 2)
     head = (x, body.top - r + size // 20)
 
-    # Ponytail / bun sit behind everything else
-    if style == "ponytail":
+    # Hair behind the back — drawn first so the shirt and face go on top of it
+    if style == "long":
+        back = pygame.Rect(0, 0, int(r * 2.8), int(r * 3.2))
+        back.midtop = (x, head[1] - r // 2)
+        pygame.draw.rect(surface, hair, back, border_radius=r // 2)
+    elif style == "bob":
+        back = pygame.Rect(0, 0, int(r * 2.5), int(r * 1.6))
+        back.midtop = (x, head[1] - r // 2)
+        pygame.draw.rect(surface, hair, back, border_radius=r // 2)
+    elif style == "ponytail":
         tail = pygame.Rect(0, 0, int(r * 0.6), int(r * 1.5))
         tail.midtop = (x + int(r * 1.05), head[1] - r // 3)
         pygame.draw.rect(surface, hair, tail, border_radius=r // 3)
@@ -43,16 +51,6 @@ def draw_avatar(surface, avatar, center, size=60):
     # Shirt
     pygame.draw.rect(surface, avatar["shirt"], body, border_radius=size // 8)
     pygame.draw.rect(surface, OUTLINE, body, width=line, border_radius=size // 8)
-
-    # Long hair and bobs frame the face and fall in front of the shoulders
-    if style == "long":
-        back = pygame.Rect(0, 0, int(r * 2.3), int(r * 2.25))
-        back.midtop = (x, head[1] - r // 2)
-        pygame.draw.rect(surface, hair, back, border_radius=r // 2)
-    elif style == "bob":
-        back = pygame.Rect(0, 0, int(r * 2.5), int(r * 1.6))
-        back.midtop = (x, head[1] - r // 2)
-        pygame.draw.rect(surface, hair, back, border_radius=r // 2)
 
     # Hair on top of the head, then the face slightly lower so a hairline shows
     pygame.draw.circle(surface, hair, head, r + line + 1)

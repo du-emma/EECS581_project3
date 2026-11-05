@@ -5,8 +5,8 @@
 import os
 
 # Window — same shape as Megan's store art (2360x1640), scaled to 40%
-WIDTH = 944
-HEIGHT = 656
+WIDTH = 1180
+HEIGHT = 720
 FPS = 60
 TITLE = "Grocery Rush"
 

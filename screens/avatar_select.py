@@ -11,8 +11,10 @@ from data.avatars import AVATARS
 from screens.base_screen import BaseScreen, MenuButton, draw_text
 
 CARD_W = 170
-CARD_H = 230
-CARD_GAP = 30
+CARD_H = 190
+CARD_GAP = 22
+PER_ROW = 4
+GRID_TOP = 125
 
 
 class AvatarSelect(BaseScreen):
@@ -20,17 +22,19 @@ class AvatarSelect(BaseScreen):
         super().__init__(state)
         cx = config.WIDTH // 2
 
-        # One card per avatar, laid out in a centered row
-        total_w = len(AVATARS) * CARD_W + (len(AVATARS) - 1) * CARD_GAP
-        left = cx - total_w // 2
+        # One card per avatar, in centered rows of PER_ROW
+        row_w = PER_ROW * CARD_W + (PER_ROW - 1) * CARD_GAP
+        left = cx - row_w // 2
         self.cards = []
         for i, avatar in enumerate(AVATARS):
-            rect = pygame.Rect(left + i * (CARD_W + CARD_GAP), 170, CARD_W, CARD_H)
+            col, row = i % PER_ROW, i // PER_ROW
+            rect = pygame.Rect(left + col * (CARD_W + CARD_GAP),
+                               GRID_TOP + row * (CARD_H + CARD_GAP), CARD_W, CARD_H)
             self.cards.append((rect, avatar))
 
-        self.back = MenuButton("Back", (cx - 150, config.HEIGHT - 80),
+        self.back = MenuButton("Back", (cx - 150, config.HEIGHT - 50),
                                lambda: state.change_screen(game_state.MENU), size=(220, 60))
-        self.go = MenuButton("Let's Shop!", (cx + 150, config.HEIGHT - 80),
+        self.go = MenuButton("Let's Shop!", (cx + 150, config.HEIGHT - 50),
                              lambda: state.change_screen(game_state.STORE), size=(220, 60))
 
     def handle_event(self, event):
@@ -49,7 +53,7 @@ class AvatarSelect(BaseScreen):
 
     def draw(self, surface):
         surface.fill(config.BACKGROUND)
-        draw_text(surface, "Choose Your Shopper", config.HEADING_SIZE, (config.WIDTH // 2, 90), config.ACCENT)
+        draw_text(surface, "Choose Your Shopper", config.HEADING_SIZE, (config.WIDTH // 2, 70), config.ACCENT)
 
         mouse = pygame.mouse.get_pos()
         for rect, avatar in self.cards:
@@ -62,12 +66,12 @@ class AvatarSelect(BaseScreen):
             else:
                 border, width = config.CARD_BORDER, 2
             pygame.draw.rect(surface, border, rect, width=width, border_radius=14)
-            draw_avatar(surface, avatar, (rect.centerx, rect.centery - 15), size=120)
-            draw_text(surface, avatar["name"], config.BODY_SIZE, (rect.centerx, rect.bottom - 28))
+            draw_avatar(surface, avatar, (rect.centerx, rect.centery - 18), size=115)
+            draw_text(surface, avatar["name"], config.BODY_SIZE, (rect.centerx, rect.bottom - 22))
 
         if self.state.avatar_id is None:
             draw_text(surface, "Click a shopper to pick them", config.BODY_SIZE,
-                      (config.WIDTH // 2, 445), config.TEXT_MUTED)
+                      (config.WIDTH // 2, 548), config.TEXT_MUTED)
 
         self.back.draw(surface)
         self.go.draw(surface)

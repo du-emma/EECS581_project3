@@ -4,23 +4,28 @@
 
 import os
 
-# Window
-WIDTH = 960
-HEIGHT = 640
+# Window — same shape as Megan's store art (2360x1640), scaled to 40%
+WIDTH = 944
+HEIGHT = 656
 FPS = 60
 TITLE = "Grocery Rush"
 
-# Colors (R, G, B)
-BACKGROUND = (246, 241, 230)
-TEXT = (40, 40, 40)
-TEXT_MUTED = (110, 110, 110)
-ACCENT = (52, 140, 82)          # grocery green
-BUTTON = (52, 140, 82)
-BUTTON_HOVER = (40, 112, 64)
+# Colors (R, G, B) — matched to Megan's store background
+WALL = (230, 230, 253)          # pale lavender wall
+FLOOR = (107, 107, 159)         # dusty purple floor tiles
+OUTLINE = (85, 85, 135)         # deep purple tile lines / outlines
+DOOR = (176, 176, 222)          # soft periwinkle door frame
+
+BACKGROUND = WALL
+TEXT = (60, 60, 100)
+TEXT_MUTED = (120, 120, 165)
+ACCENT = OUTLINE
+BUTTON = FLOOR
+BUTTON_HOVER = OUTLINE
 BUTTON_TEXT = (255, 255, 255)
 CARD = (255, 255, 255)
-CARD_BORDER = (210, 204, 190)
-SELECTED = (240, 170, 40)
+CARD_BORDER = DOOR
+SELECTED = (240, 170, 40)       # gold, so the picked avatar stands out against the purples
 
 # Font sizes
 TITLE_SIZE = 84

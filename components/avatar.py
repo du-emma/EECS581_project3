@@ -8,8 +8,10 @@
 
 import pygame
 
+from config import OUTLINE
+
 HAIR = (60, 40, 30)
-OUTLINE = (40, 40, 40)
+EYES = (30, 25, 35)
 
 
 def draw_avatar(surface, avatar, center, size=60):
@@ -40,5 +42,5 @@ def draw_avatar(surface, avatar, center, size=60):
     eye_y = head_center[1] + head_radius // 6
     eye_dx = head_radius // 2
     eye_r = max(2, size // 30)
-    pygame.draw.circle(surface, OUTLINE, (x - eye_dx, eye_y), eye_r)
-    pygame.draw.circle(surface, OUTLINE, (x + eye_dx, eye_y), eye_r)
+    pygame.draw.circle(surface, EYES, (x - eye_dx, eye_y), eye_r)
+    pygame.draw.circle(surface, EYES, (x + eye_dx, eye_y), eye_r)

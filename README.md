@@ -1,27 +1,31 @@
 # Grocery Rush
 
-A shopping and delivery game: navigate a grocery store, collect the items on a customer's list, and deliver them before time runs out.
+A shopping and delivery game: navigate a grocery store, collect the items on a customer's list, and deliver them before time runs out. Built with Python and pygame.
 
 ## Running the game
 
 ```
-cd client
-npm install
-npm run dev
+pip install -r requirements.txt
+python main.py
 ```
-
-Then open the URL Vite prints (usually http://localhost:5173).
 
 ## Sprint 1 ownership
 
 | Person | Files |
 |---|---|
-| Arpa | `App.tsx`, `state/GameContext.tsx`, `data/avatars.ts`, `screens/MainMenu.tsx`, `Instructions.tsx`, `Settings.tsx`, `AvatarSelect.tsx`, `components/Avatar.tsx` |
-| Megan | `public/assets/`, `styles/global.css`, `screens/StorePage.tsx`, `components/Button.tsx`, `components/store/HudPlaceholders.tsx` |
-| Ellie | `data/aisles.ts`, `screens/AisleView.tsx`, `components/store/StoreMap.tsx`, `components/store/Aisle.tsx`, `components/aisle/Shelf.tsx` |
+| Arpa | `main.py`, `game_state.py`, `data/avatars.py`, `screens/base_screen.py`, `main_menu.py`, `instructions.py`, `settings_screen.py`, `avatar_select.py`, `components/avatar.py` |
+| Megan | `assets/`, `screens/store_page.py`, `components/button.py`, `components/hud_placeholders.py` |
+| Ellie | `data/aisles.py`, `screens/aisle_view.py`, `components/store_map.py`, `components/aisle.py`, `components/shelf.py` |
 | Serom | `docs/` |
 
-`types.ts` is shared — agree on changes as a team.
+`config.py` is shared — agree on changes as a team.
+
+## Folders
+
+- `screens/` — full pages (main menu, store page, aisle view, ...)
+- `components/` — smaller pieces drawn inside screens (buttons, aisles, avatar, ...)
+- `data/` — lists of avatars and aisles
+- `assets/` — images and fonts
 
 ## Screen flow
 

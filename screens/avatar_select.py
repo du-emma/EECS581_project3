@@ -66,7 +66,7 @@ class AvatarSelect(BaseScreen):
             else:
                 border, width = config.CARD_BORDER, 2
             pygame.draw.rect(surface, border, rect, width=width, border_radius=14)
-            draw_avatar(surface, avatar, (rect.centerx, rect.centery - 18), size=115)
+            draw_avatar(surface, avatar, (rect.centerx, rect.centery - 16), size=148)
             draw_text(surface, avatar["name"], config.BODY_SIZE, (rect.centerx, rect.bottom - 22))
 
         if self.state.avatar_id is None:

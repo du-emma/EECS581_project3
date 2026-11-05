@@ -1,5 +1,6 @@
 # Owner: Arpa
 # Draws the avatar the player chose. Shown on the store page, positioned at the current aisle.
+# Style: chibi grocery worker — big head, thick dark outlines, green cap and apron.
 #
 # Usage (e.g. from store_page.py):
 #     from components.avatar import draw_avatar
@@ -8,75 +9,126 @@
 
 import pygame
 
-from config import OUTLINE
+# Avatars are designed on a 200 x 300 grid, drawn SCALE times bigger, then shrunk
+# down to the size asked for — that keeps the edges smooth.
+GRID_W, GRID_H = 200, 300
+SCALE = 3
+STROKE = 3.5  # outline thickness, in grid units
 
-EYES = (30, 25, 35)
-SMILE = (120, 50, 60)
-GLASSES = (40, 40, 60)
+INK = (45, 38, 48)               # outlines + eyes
+CAP = (62, 135, 72)              # green cap
+CAP_DARK = (48, 110, 58)
+APRON = (52, 118, 62)            # green apron
+APRON_DARK = (40, 96, 50)
+TEE = (250, 250, 250)            # white t-shirt
+PANTS = (38, 36, 42)
+SHOES = (250, 250, 250)
+SMILE = (150, 70, 70)
+GLASSES = (45, 38, 48)
+
+_cache = {}
+
+
+def _u(v):
+    return int(round(v * SCALE))
+
+
+def _rect(x, y, w, h):
+    return pygame.Rect(_u(x), _u(y), _u(w), _u(h))
+
+
+def _shape(surf, kind, color, x, y, w, h, radius=0):
+    # Draws a filled ellipse or rounded rectangle with a dark outline around it.
+    outline = _rect(x - STROKE, y - STROKE, w + 2 * STROKE, h + 2 * STROKE)
+    inner = _rect(x, y, w, h)
+    if kind == "ellipse":
+        pygame.draw.ellipse(surf, INK, outline)
+        pygame.draw.ellipse(surf, color, inner)
+    else:
+        pygame.draw.rect(surf, INK, outline, border_radius=_u(radius + STROKE))
+        pygame.draw.rect(surf, color, inner, border_radius=_u(radius))
+
+
+def _line(surf, color, a, b, width):
+    pygame.draw.line(surf, color, (_u(a[0]), _u(a[1])), (_u(b[0]), _u(b[1])), _u(width))
+
+
+def _render(avatar):
+    # Draws the avatar back-to-front on a big transparent canvas.
+    surf = pygame.Surface((_u(GRID_W), _u(GRID_H)), pygame.SRCALPHA)
+    skin, hair, style = avatar["skin"], avatar["hair"], avatar["hair_style"]
+
+    # 1. Hair that hangs behind the head and back
+    if style == "long":
+        _shape(surf, "rect", hair, 30, 84, 140, 152, radius=44)
+    elif style == "bob":
+        _shape(surf, "rect", hair, 34, 84, 132, 100, radius=38)
+    elif style == "ponytail":
+        _shape(surf, "ellipse", hair, 18, 100, 46, 112)
+    elif style == "bun":
+        _shape(surf, "ellipse", hair, 12, 50, 50, 50)
+
+    # 2. Legs and shoes
+    _shape(surf, "rect", PANTS, 70, 222, 60, 48, radius=6)
+    _line(surf, INK, (100, 240), (100, 270), STROKE)
+    _shape(surf, "ellipse", SHOES, 64, 262, 36, 18)
+    _shape(surf, "ellipse", SHOES, 100, 262, 36, 18)
+
+    # 3. Arms (skin), then t-shirt sleeves over the shoulders
+    _shape(surf, "rect", skin, 50, 180, 20, 52, radius=10)
+    _shape(surf, "rect", skin, 130, 180, 20, 52, radius=10)
+    _shape(surf, "rect", TEE, 48, 160, 28, 32, radius=10)
+    _shape(surf, "rect", TEE, 124, 160, 28, 32, radius=10)
+
+    # 4. T-shirt body and apron with straps + pocket
+    _shape(surf, "rect", TEE, 64, 156, 72, 74, radius=14)
+    _shape(surf, "rect", APRON, 70, 172, 60, 60, radius=8)
+    _line(surf, APRON, (78, 156), (78, 174), 8)
+    _line(surf, APRON, (122, 156), (122, 174), 8)
+    pygame.draw.rect(surf, APRON_DARK, _rect(88, 188, 24, 16), width=_u(2), border_radius=_u(3))
+
+    # 5. Ears, then the head
+    _shape(surf, "ellipse", skin, 30, 112, 24, 28)
+    _shape(surf, "ellipse", skin, 146, 112, 24, 28)
+    _shape(surf, "ellipse", skin, 40, 56, 120, 114)
+
+    # 6. Hair around the face: side locks + bangs under the cap
+    lock_h = 72 if style in ("long", "bob") else 36
+    pygame.draw.rect(surf, hair, _rect(39, 74, 20, lock_h), border_radius=_u(10))
+    pygame.draw.rect(surf, hair, _rect(141, 74, 20, lock_h), border_radius=_u(10))
+    pygame.draw.ellipse(surf, hair, _rect(46, 70, 108, 36))
+
+    # 7. Cap: rounded crown, brim pointing to the right, seam down the middle
+    _shape(surf, "ellipse", CAP, 38, 24, 124, 68)
+    pygame.draw.rect(surf, CAP, _rect(40, 58, 120, 22))   # flatten the bottom of the crown
+    _line(surf, INK, (36, 81), (164, 81), STROKE)
+    _line(surf, CAP_DARK, (100, 28), (100, 78), 2.5)
+    _shape(surf, "ellipse", CAP, 104, 72, 76, 20)          # brim
+
+    # 8. Face: tall oval eyes with a highlight and lash, then a small smile
+    for ex, lash in ((78, -1), (122, 1)):
+        pygame.draw.ellipse(surf, INK, _rect(ex - 10, 112, 20, 32))
+        pygame.draw.ellipse(surf, (255, 255, 255), _rect(ex - 5, 117, 7, 9))
+        _line(surf, INK, (ex + lash * 8, 115), (ex + lash * 15, 108), 3)
+    smile = _rect(90, 148, 20, 10)
+    pygame.draw.arc(surf, SMILE, smile, 3.5, 5.9, _u(2.2))
+
+    # 9. Glasses: round frames around each eye + bridge
+    if avatar["glasses"]:
+        for ex in (78, 122):
+            pygame.draw.ellipse(surf, GLASSES, _rect(ex - 19, 109, 38, 38), width=_u(3))
+        _line(surf, GLASSES, (97, 128), (103, 128), 3)
+
+    return surf
 
 
 def draw_avatar(surface, avatar, center, size=60):
-    # Draws a simple shopper: shirt, hair, face, and optional glasses.
-    # `center` is the middle of the avatar; `size` is its total height in pixels.
+    # Draws the avatar centered at `center`. `size` is its total height in pixels.
     if avatar is None:
         return
-    x, y = center
-    r = size // 5                      # head radius
-    line = max(1, size // 40)          # outline thickness
-    hair = avatar["hair"]
-    style = avatar["hair_style"]
-
-    # Body (shirt)
-    body = pygame.Rect(0, 0, size // 2, size // 2)
-    body.midbottom = (x, y + size // 2)
-    head = (x, body.top - r + size // 20)
-
-    # Hair behind the back — drawn first so the shirt and face go on top of it
-    if style == "long":
-        back = pygame.Rect(0, 0, int(r * 2.8), int(r * 3.2))
-        back.midtop = (x, head[1] - r // 2)
-        pygame.draw.rect(surface, hair, back, border_radius=r // 2)
-    elif style == "bob":
-        back = pygame.Rect(0, 0, int(r * 2.5), int(r * 1.6))
-        back.midtop = (x, head[1] - r // 2)
-        pygame.draw.rect(surface, hair, back, border_radius=r // 2)
-    elif style == "ponytail":
-        tail = pygame.Rect(0, 0, int(r * 0.6), int(r * 1.5))
-        tail.midtop = (x + int(r * 1.05), head[1] - r // 3)
-        pygame.draw.rect(surface, hair, tail, border_radius=r // 3)
-        pygame.draw.circle(surface, hair, (x + int(r * 0.9), head[1] - r // 3), int(r * 0.5))
-    elif style == "bun":
-        pygame.draw.circle(surface, hair, (x, head[1] - r), int(r * 0.5))
-
-    # Shirt
-    pygame.draw.rect(surface, avatar["shirt"], body, border_radius=size // 8)
-    pygame.draw.rect(surface, OUTLINE, body, width=line, border_radius=size // 8)
-
-    # Hair on top of the head, then the face slightly lower so a hairline shows
-    pygame.draw.circle(surface, hair, head, r + line + 1)
-    face = (x, head[1] + r // 5)
-    pygame.draw.circle(surface, avatar["skin"], face, r - r // 8)
-    # Side-swept bangs
-    bangs = pygame.Rect(0, 0, int(r * 1.3), int(r * 0.7))
-    bangs.midtop = (x - r // 5, head[1] - r + line)
-    pygame.draw.ellipse(surface, hair, bangs)
-
-    # Eyes
-    eye_y = face[1] + r // 8
-    eye_dx = int(r * 0.4)
-    eye_r = max(2, r // 7)
-    pygame.draw.circle(surface, EYES, (x - eye_dx, eye_y), eye_r)
-    pygame.draw.circle(surface, EYES, (x + eye_dx, eye_y), eye_r)
-
-    # Glasses: a ring around each eye plus a bridge
-    if avatar["glasses"]:
-        lens_r = max(3, int(r * 0.3))
-        glass_line = max(1, size // 55)
-        for side in (-1, 1):
-            pygame.draw.circle(surface, GLASSES, (x + side * eye_dx, eye_y), lens_r, width=glass_line)
-        pygame.draw.line(surface, GLASSES, (x - eye_dx + lens_r, eye_y), (x + eye_dx - lens_r, eye_y), glass_line)
-
-    # Smile
-    smile = pygame.Rect(0, 0, int(r * 0.55), int(r * 0.35))
-    smile.midtop = (x, eye_y + r // 4)
-    pygame.draw.arc(surface, SMILE, smile, 3.5, 5.9, max(1, size // 70))
+    key = (avatar["id"], size)
+    if key not in _cache:
+        width = size * GRID_W // GRID_H
+        _cache[key] = pygame.transform.smoothscale(_render(avatar), (width, size))
+    image = _cache[key]
+    surface.blit(image, image.get_rect(center=center))

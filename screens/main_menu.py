@@ -35,7 +35,7 @@ class MainMenu(BaseScreen):
             config.TEXT_MUTED,
         )
         # A couple of shoppers on either side of the buttons for decoration
-        draw_avatar(surface, AVATARS[0], (220, 420), size=140)
-        draw_avatar(surface, AVATARS[1], (config.WIDTH - 220, 420), size=140)
+        draw_avatar(surface, AVATARS[0], (190, 420), size=210)
+        draw_avatar(surface, AVATARS[1], (config.WIDTH - 190, 420), size=210)
         for button in self.buttons:
             button.draw(surface)

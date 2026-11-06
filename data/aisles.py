@@ -4,9 +4,10 @@
 # Coordinate with Megan so positions match the store page layout.
 
 AISLES = [
-    {"id": "baking",  "name": "Baking", "rect": (0.10, 0.22, 0.14, 0.70)},
-    {"id": "produce", "name": "Produce", "rect": (0.30, 0.22, 0.14, 0.70)},
-    {"id": "dairy",   "name": "Dairy & Eggs", "rect": (0.50, 0.22, 0.14, 0.70)},
+    {"id": "dairy",  "name": "Dairy & Eggs", "rect": (0.07, 0.22, 0.102, 0.583)},
+    {"id": "meat", "name": "Meat", "rect": (0.27, 0.22, 0.102, 0.583)},
+    {"id": "baking",   "name": "Baking", "rect": (0.47, 0.22, 0.102, 0.583)},
+    {"id": "produce",  "name": "Produce", "rect": (0.67, 0.22, 0.102, 0.583)},
 ]
  
 def get_aisle(aisle_id):

@@ -2,6 +2,7 @@
 # Shown after clicking an aisle. Displays the inside of the selected aisle with empty shelves
 # (items get added in a later sprint). Has a Back button to return to the store page.
 
+import game_state
 import config
 from screens.base_screen import BaseScreen, MenuButton, draw_text
 from components.shelf import Shelf
@@ -24,14 +25,14 @@ class AisleView(BaseScreen):
         )
  
     def go_back(self):
-        self.state.change_screen("store_page")
+        self.state.change_screen(game_state.STORE)
  
     def handle_event(self, event):
         self.back_button.handle_event(event)
  
     def draw(self, surface):
         surface.fill(config.BACKGROUND)
-        aisle = get_aisle(self.state.current_aisle)
+        aisle = get_aisle(self.state.current_aisle_id)
         name = aisle["name"] if aisle else "Unknown"
         draw_text(surface, f"{name} Aisle", config.HEADING_SIZE,
                   (config.WIDTH // 2, int(config.HEIGHT * 0.11)))

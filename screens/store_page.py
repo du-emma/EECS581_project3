@@ -8,6 +8,10 @@ import os
 import config
 import game_state
 import pygame
+from components.avatar import draw_avatar
+from components.button import Button
+from components.hud_placeholders import HudPlaceholders
+from data.avatars import get_avatar
 from screens.base_screen import BaseScreen, draw_text
 
 
@@ -19,19 +23,49 @@ class StorePage(BaseScreen):
         self.bg_image = pygame.transform.smoothscale(
             bg_image, (config.WIDTH, config.HEIGHT)
         )
-        cx = config.WIDTH // 2
-        self.buttons = [
-            #MenuButton("Start", (cx, 300), lambda: state.change_screen(game_state.AVATAR_SELECT)),
-            #MenuButton("Instructions", (cx, 380), lambda: state.change_screen(game_state.INSTRUCTIONS)),
-            #MenuButton("Settings", (cx, 460), lambda: state.change_screen(game_state.SETTINGS)),
-            #MenuButton("Quit", (cx, 540), state.quit),
-        ]
+        self.hud = HudPlaceholders()
+        self.paused = False
+        center_x = config.WIDTH // 2
+        self.continue_button = Button(
+            "Continue",
+            (center_x, config.HEIGHT // 2 + 35),
+            lambda: setattr(self, "paused", False),
+        )
+        self.main_menu_button = Button(
+            "Main Menu",
+            (center_x, config.HEIGHT // 2 + 115),
+            lambda: self.state.change_screen(game_state.MENU),
+        )
 
     def handle_event(self, event):
-        for button in self.buttons:
-            button.handle_event(event)
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.paused = not self.paused
+            return
+
+        if self.paused:
+            self.continue_button.handle_event(event)
+            self.main_menu_button.handle_event(event)
 
     def draw(self, surface):
         surface.blit(self.bg_image, (0, 0))
-        for button in self.buttons:
-            button.draw(surface)
+        draw_avatar(
+            surface,
+            get_avatar(self.state.avatar_id),
+            (config.WIDTH // 2, config.HEIGHT - 170),
+            size=100,
+        )
+        self.hud.draw(surface)
+
+        if self.paused:
+            overlay = pygame.Surface((config.WIDTH, config.HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 160))
+            surface.blit(overlay, (0, 0))
+            draw_text(
+                surface,
+                "Paused",
+                config.TITLE_SIZE,
+                (config.WIDTH // 2, config.HEIGHT // 2 - 60),
+                config.BUTTON_TEXT,
+            )
+            self.continue_button.draw(surface)
+            self.main_menu_button.draw(surface)

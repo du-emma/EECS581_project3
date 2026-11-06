@@ -2,6 +2,8 @@
 # One aisle on the store map, labeled with its name.
 # Clicking it calls select_aisle(aisle_id) from game_state to open that aisle.
 
+import os
+
 import pygame
 import config
  
@@ -12,7 +14,10 @@ class Aisle:
         self.name = name
         fx, fy, fw, fh = rect  # fractions of the window (see data/aisles.py)
         self.rect = pygame.Rect(int(fx * config.WIDTH), int(fy * config.HEIGHT),
-                                int(fw * config.WIDTH), int(fh * config.HEIGHT))
+                                round(fw * config.WIDTH), round(fh * config.HEIGHT))
+        image_path = os.path.join(config.STORE_DIR, "Aisle.png")
+        self.image = pygame.image.load(image_path).convert_alpha()
+        self.image = pygame.transform.smoothscale(self.image, self.rect.size)
         self.game_state = game_state
         self.font = pygame.font.SysFont(None, config.BODY_SIZE)
  
@@ -24,6 +29,7 @@ class Aisle:
         return False
  
     def draw(self, surface):
+        surface.blit(self.image, self.rect)
         if not self.rect.collidepoint(pygame.mouse.get_pos()):
             return
         pygame.draw.rect(surface, config.SELECTED, self.rect, 4)

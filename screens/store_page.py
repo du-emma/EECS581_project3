@@ -8,8 +8,10 @@ import os
 import config
 import game_state
 import pygame
+from components.aisle import Aisle
 from components.avatar import draw_avatar
 from components.button import Button
+from data.aisles import AISLES
 from components.hud_placeholders import HudPlaceholders
 from data.avatars import get_avatar
 from screens.base_screen import BaseScreen, draw_text
@@ -23,6 +25,10 @@ class StorePage(BaseScreen):
         self.bg_image = pygame.transform.smoothscale(
             bg_image, (config.WIDTH, config.HEIGHT)
         )
+        self.aisles = [
+            Aisle(aisle["id"], aisle["name"], aisle["rect"], state)
+            for aisle in AISLES
+        ]
         self.hud = HudPlaceholders()
         self.paused = False
         center_x = config.WIDTH // 2
@@ -45,9 +51,16 @@ class StorePage(BaseScreen):
         if self.paused:
             self.continue_button.handle_event(event)
             self.main_menu_button.handle_event(event)
+            return
+
+        for aisle in self.aisles:
+            if aisle.handle_event(event):
+                break
 
     def draw(self, surface):
         surface.blit(self.bg_image, (0, 0))
+        for aisle in self.aisles:
+            aisle.draw(surface)
         draw_avatar(
             surface,
             get_avatar(self.state.avatar_id),

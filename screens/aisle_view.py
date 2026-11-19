@@ -1,18 +1,21 @@
 # Owner: Ellie
-# Shown after clicking an aisle. Displays the inside of the selected aisle with empty shelves
-# (items get added in a later sprint). Has a Back button to return to the store page.
+# Shown after clicking an aisle. Loads that aisle's items from the DB and shows
+# each item's name, price, and stock quantity on the shelves.
+
+import pygame
 
 import game_state
 import config
 from screens.base_screen import BaseScreen, MenuButton, draw_text
 from components.shelf import Shelf
-from data.aisles import get_aisle
- 
- 
+from data.aisles import get_aisle, get_aisle_items
+from data.items import decrement_stock
+
+
 class AisleView(BaseScreen):
     def __init__(self, state):
         super().__init__(state)
- 
+
         margin = int(config.WIDTH * 0.1)
         shelf_w = config.WIDTH - 2 * margin
         slot_h = int(config.HEIGHT * 0.13)
@@ -20,23 +23,57 @@ class AisleView(BaseScreen):
             Shelf(margin, int(config.HEIGHT * (0.24 + 0.22 * row)), shelf_w, slot_h=slot_h)
             for row in range(3)
         ]
+        self._stock_shelves()
         self.back_button = MenuButton(
             "Back", (24 + 75, config.HEIGHT - 49), self.go_back, size=(150, 50)
         )
- 
+
+    def _stock_shelves(self):
+        """Pull this aisle's items from SQLite and lay them across the shelf rows."""
+        items = get_aisle_items(self.state.current_aisle_id)
+        slots_per_shelf = len(self.shelves[0].items) if self.shelves else 5
+        for i, shelf in enumerate(self.shelves):
+            start = i * slots_per_shelf
+            shelf.place_items(items[start : start + slots_per_shelf])
+
     def go_back(self):
         self.state.change_screen(game_state.STORE)
- 
+
     def handle_event(self, event):
         self.back_button.handle_event(event)
- 
+        if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
+            return
+        if self.back_button.rect.collidepoint(event.pos):
+            return
+
+        for shelf in self.shelves:
+            item, slot = shelf.item_at_pos(event.pos)
+            if item is None:
+                continue
+            if item.get("stock_quantity", 0) <= 0:
+                return
+            shelf.flash_slot(slot)
+            updated = decrement_stock(item["item_id"])
+            if updated is not None:
+                item["stock_quantity"] = updated["stock_quantity"]
+            return
+
+    def update(self, dt):
+        for shelf in self.shelves:
+            shelf.update(dt)
+
     def draw(self, surface):
         surface.fill(config.BACKGROUND)
         aisle = get_aisle(self.state.current_aisle_id)
         name = aisle["name"] if aisle else "Unknown"
-        draw_text(surface, f"{name} Aisle", config.HEADING_SIZE,
-                  (config.WIDTH // 2, int(config.HEIGHT * 0.11)))
- 
+        draw_text(
+            surface,
+            f"{name} Aisle",
+            config.HEADING_SIZE,
+            (config.WIDTH // 2, int(config.HEIGHT * 0.11)),
+        )
+
         for shelf in self.shelves:
             shelf.draw(surface)
         self.back_button.draw(surface)
+

@@ -9,6 +9,18 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## Grocery database (Sprint 2 / R7)
+
+Aisles and items are stored in a local SQLite file: `data/grocery.db`.
+
+- Edit the hardcoded lists in `data/db.py` (`AISLES` / `ITEMS`)
+- Delete `data/grocery.db` (or call `reset_db()`) to rebuild from those lists
+- Built-in `sqlite3` — no Docker, MySQL install, or extra packages
+
+```
+py -3 -c "from data.items import get_all_items; print(len(get_all_items()), 'items')"
+```
+
 ## Sprint 1 ownership
 
 | Person | Files |

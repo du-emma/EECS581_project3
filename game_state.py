@@ -51,18 +51,33 @@ class GameState:
 
     def generate_grocery_list(self, previous_items=None):
         """Generate a new randomized shopping list for the next order."""
-        available_items = (
-            "milk", "eggs", "bread", "cheese", "chicken",
-            "beef", "apples", "lettuce", "flour", "sugar",
-        )
+        available_items = self._available_item_names()
         previous_items = set(previous_items or ())
-        item_count = random.randint(3, 5)
+        item_count = min(random.randint(3, 5), len(available_items))
 
-        for _ in range(20):
-            items = set(random.sample(available_items, item_count))
+        items = set(random.sample(available_items, item_count))
+        for _ in range(19):
             if items != previous_items:
                 break
+            items = set(random.sample(available_items, item_count))
         self.set_grocery_list(items)
+
+    @staticmethod
+    def _available_item_names():
+        """Pull item names from MySQL; fall back to a small hardcoded list."""
+        fallback = (
+            "milk", "eggs", "cheese", "chicken", "beef",
+            "apples", "lettuce", "flour", "sugar", "carrots",
+        )
+        try:
+            from data.items import get_item_names
+
+            names = get_item_names()
+            if names:
+                return tuple(names)
+        except Exception:
+            pass
+        return fallback
 
     def update(self, dt):
         if not self._order_started or self._order_settled:

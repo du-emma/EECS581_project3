@@ -1,7 +1,7 @@
-# Owner: Megan
-# Placeholder boxes for the timer, grocery list, and earnings.
-# These just reserve space on the store page for now; they get real values in later sprints.
+﻿# Owner: Emma, Megan
+# HUD display for the order timer, grocery list, and earnings.
 
+import math
 import os
 
 import pygame
@@ -11,15 +11,16 @@ from screens.base_screen import draw_text
 
 
 class HudPlaceholders:
-    def __init__(self):
-        self.timer_rect = pygame.Rect(24, 24, 150, 88)
+    def __init__(self, state):
+        self.state = state
+        self.timer_rect = pygame.Rect(24, 24, 180, 118)
         clipboard_path = os.path.join(config.STORE_DIR, "Clipboard.png")
         self.clipboard_image = pygame.image.load(clipboard_path).convert_alpha()
         self.clipboard_rect = self.clipboard_image.get_rect(
-            topright=(config.WIDTH - 24, 24)
+            topright=(config.WIDTH - 24, 128)
         )
         self.earnings_rect = pygame.Rect(
-            config.WIDTH - 214, config.HEIGHT - 110, 190, 86
+            config.WIDTH - 214, 24, 190, 86
         )
 
     def draw(self, surface):
@@ -31,13 +32,23 @@ class HudPlaceholders:
             (self.timer_rect.centerx, 47),
             config.ACCENT,
         )
+        seconds = math.ceil(self.state.remaining)
+        timer_text = f"{seconds // 60:02d}:{seconds % 60:02d}"
         draw_text(
             surface,
-            "--:--",
+            timer_text,
             config.HEADING_SIZE,
             (self.timer_rect.centerx, 84),
             config.TEXT,
         )
+        if self.state.order_expired:
+            draw_text(
+                surface,
+                "ORDER EXPIRED",
+                21,
+                (self.timer_rect.centerx, 124),
+                config.SELECTED,
+            )
 
         surface.blit(self.clipboard_image, self.clipboard_rect)
 
@@ -49,7 +60,7 @@ class HudPlaceholders:
         )
         draw_text(
             surface,
-            "$0.00",
+            f"${self.state.earnings:.2f}",
             config.BODY_SIZE,
             (self.earnings_rect.centerx, self.earnings_rect.top + 60),
             config.TEXT,

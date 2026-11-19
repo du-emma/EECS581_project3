@@ -1,4 +1,4 @@
-# Owner: Arpa
+﻿# Owner: Arpa
 # The first screen when the game opens.
 # Buttons: Start (goes to avatar select), Instructions, and Settings.
 
@@ -14,7 +14,7 @@ class MainMenu(BaseScreen):
         super().__init__(state)
         cx = config.WIDTH // 2
         self.buttons = [
-            MenuButton("Start", (cx, 300), lambda: state.change_screen(game_state.AVATAR_SELECT)),
+            MenuButton("Start", (cx, 300), state.start_game),
             MenuButton("Instructions", (cx, 380), lambda: state.change_screen(game_state.INSTRUCTIONS)),
             MenuButton("Settings", (cx, 460), lambda: state.change_screen(game_state.SETTINGS)),
             MenuButton("Quit", (cx, 540), state.quit),

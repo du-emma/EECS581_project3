@@ -7,6 +7,7 @@ import pygame
 import game_state
 import config
 from screens.base_screen import BaseScreen, MenuButton, draw_text
+from components.hud_placeholders import HudPlaceholders
 from components.shelf import Shelf
 from data.aisles import get_aisle, get_aisle_items
 from data.items import decrement_stock
@@ -24,6 +25,11 @@ class AisleView(BaseScreen):
             for row in range(3)
         ]
         self._stock_shelves()
+        self.hud = HudPlaceholders(
+            state,
+            show_clipboard=False,
+            on_stock_changed=self._sync_stock,
+        )
         self.back_button = MenuButton(
             "Back", (24 + 75, config.HEIGHT - 49), self.go_back, size=(150, 50)
         )
@@ -37,9 +43,18 @@ class AisleView(BaseScreen):
             shelf.place_items(items[start : start + slots_per_shelf])
 
     def go_back(self):
+        self.state.close_cart()
         self.state.change_screen(game_state.STORE)
 
+    def _sync_stock(self, item_id, stock_quantity):
+        for shelf in self.shelves:
+            for item in shelf.items:
+                if item is not None and item.get("item_id") == item_id:
+                    item["stock_quantity"] = stock_quantity
+
     def handle_event(self, event):
+        if self.hud.handle_event(event):
+            return
         self.back_button.handle_event(event)
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
             return
@@ -56,6 +71,7 @@ class AisleView(BaseScreen):
             updated = decrement_stock(item["item_id"])
             if updated is not None:
                 item["stock_quantity"] = updated["stock_quantity"]
+            self.state.add_to_cart(item)
             return
 
     def update(self, dt):
@@ -76,4 +92,5 @@ class AisleView(BaseScreen):
         for shelf in self.shelves:
             shelf.draw(surface)
         self.back_button.draw(surface)
+        self.hud.draw(surface)
 

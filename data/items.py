@@ -77,3 +77,31 @@ def decrement_stock(item_id):
     )
     item["stock_quantity"] -= 1
     return item
+
+
+def increment_stock(item_id, amount=1):
+    """Add stock back when an item is removed from the cart. Returns the updated item."""
+    if amount <= 0:
+        return None
+    rows = fetch_all(
+        """
+        SELECT item_id, item_name, aisle_id, price, stock_quantity
+        FROM items
+        WHERE item_id = ?
+        LIMIT 1
+        """,
+        (item_id,),
+    )
+    if not rows:
+        return None
+    item = rows[0]
+    execute(
+        """
+        UPDATE items
+        SET stock_quantity = stock_quantity + ?
+        WHERE item_id = ?
+        """,
+        (amount, item_id),
+    )
+    item["stock_quantity"] += amount
+    return item

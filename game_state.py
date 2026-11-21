@@ -21,6 +21,7 @@ class GameState:
         self.current_aisle_id = None
         self.volume = 50  # 0–100
         self.running = True
+        self.cart_open = False
         self.reset_order()
 
     def change_screen(self, screen_name):
@@ -139,6 +140,53 @@ class GameState:
         self.collected_items.clear()
         self.extra_items.clear()
 
+    def add_to_cart(self, item):
+        """Add one unit of a shelf item. Stacks quantity for the same product."""
+        item_id = item["item_id"]
+        name = item["item_name"]
+        if item_id in self.cart:
+            self.cart[item_id]["quantity"] += 1
+        else:
+            self.cart[item_id] = {
+                "item_id": item_id,
+                "item_name": name,
+                "quantity": 1,
+            }
+        self.add_collected_item(name)
+        return self.cart[item_id]
+
+    def remove_from_cart(self, item_id):
+        """Remove one unit. Drops the product when its quantity hits zero."""
+        entry = self.cart.get(item_id)
+        if entry is None:
+            return None
+        entry["quantity"] -= 1
+        snapshot = dict(entry)
+        if entry["quantity"] <= 0:
+            del self.cart[item_id]
+            self.remove_collected_item(entry["item_name"])
+            snapshot["quantity"] = 0
+        return snapshot
+
+    def clear_cart(self):
+        """Remove every product from the cart. Returns the entries that were cleared."""
+        removed = [dict(entry) for entry in self.cart.values()]
+        self.cart.clear()
+        self.clear_collected_items()
+        return removed
+
+    def cart_items(self):
+        return list(self.cart.values())
+
+    def cart_count(self):
+        return sum(entry["quantity"] for entry in self.cart.values())
+
+    def toggle_cart(self):
+        self.cart_open = not self.cart_open
+
+    def close_cart(self):
+        self.cart_open = False
+
     def calculate_accuracy(self):
         return bool(self.required_items) and (
             self.collected_items == self.required_items and not self.extra_items
@@ -175,6 +223,8 @@ class GameState:
         self.required_items = set()
         self.collected_items = set()
         self.extra_items = set()
+        self.cart = {}
+        self.cart_open = False
         self._elapsed = 0.0
         self._order_started = False
         self._order_expired = False

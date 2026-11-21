@@ -120,5 +120,94 @@ class GameStateOrderTests(unittest.TestCase):
         self.assertIn("candy", state.extra_items)
 
 
+class GameStateCartTests(unittest.TestCase):
+    def _item(self, item_id, name):
+        return {"item_id": item_id, "item_name": name}
+
+    def test_add_to_cart_stacks_quantity_for_the_same_product(self):
+        state = GameState()
+        bananas = self._item(1, "bananas")
+        state.add_to_cart(bananas)
+        state.add_to_cart(bananas)
+        state.add_to_cart(bananas)
+
+        items = state.cart_items()
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["item_name"], "bananas")
+        self.assertEqual(items[0]["quantity"], 3)
+        self.assertEqual(state.cart_count(), 3)
+
+    def test_different_products_are_listed_separately(self):
+        state = GameState()
+        state.add_to_cart(self._item(1, "bananas"))
+        state.add_to_cart(self._item(2, "milk"))
+        state.add_to_cart(self._item(1, "bananas"))
+
+        items = {entry["item_name"]: entry["quantity"] for entry in state.cart_items()}
+        self.assertEqual(items, {"bananas": 2, "milk": 1})
+
+    def test_remove_decreases_quantity_by_one(self):
+        state = GameState()
+        bananas = self._item(1, "bananas")
+        state.add_to_cart(bananas)
+        state.add_to_cart(bananas)
+        state.add_to_cart(bananas)
+
+        state.remove_from_cart(1)
+        self.assertEqual(state.cart[1]["quantity"], 2)
+        state.remove_from_cart(1)
+        self.assertEqual(state.cart[1]["quantity"], 1)
+
+    def test_remove_last_unit_drops_the_product(self):
+        state = GameState()
+        state.add_to_cart(self._item(1, "bananas"))
+
+        removed = state.remove_from_cart(1)
+        self.assertEqual(removed["quantity"], 0)
+        self.assertEqual(state.cart_items(), [])
+        self.assertEqual(state.cart_count(), 0)
+
+    def test_clear_cart_removes_every_product(self):
+        state = GameState()
+        state.add_to_cart(self._item(1, "bananas"))
+        state.add_to_cart(self._item(2, "milk"))
+        state.add_to_cart(self._item(1, "bananas"))
+
+        cleared = state.clear_cart()
+        self.assertEqual(len(cleared), 2)
+        self.assertEqual(state.cart_items(), [])
+        self.assertEqual(state.cart_count(), 0)
+
+    def test_cart_contents_survive_opening_and_closing(self):
+        state = GameState()
+        state.add_to_cart(self._item(1, "bananas"))
+        state.toggle_cart()
+        self.assertTrue(state.cart_open)
+        state.toggle_cart()
+        self.assertFalse(state.cart_open)
+        self.assertEqual(state.cart_items()[0]["quantity"], 1)
+
+    def test_cart_cleared_when_a_new_order_starts(self):
+        state = GameState()
+        state.add_to_cart(self._item(1, "bananas"))
+        state.toggle_cart()
+        state.reset_order()
+        self.assertEqual(state.cart_count(), 0)
+        self.assertFalse(state.cart_open)
+
+    def test_cart_stays_in_sync_with_collected_items(self):
+        state = GameState()
+        state.set_grocery_list(["bananas"])
+        state.add_to_cart(self._item(1, "bananas"))
+        state.add_to_cart(self._item(2, "candy"))
+        self.assertIn("bananas", state.collected_items)
+        self.assertIn("candy", state.extra_items)
+
+        state.remove_from_cart(2)
+        self.assertNotIn("candy", state.extra_items)
+        state.remove_from_cart(1)
+        self.assertNotIn("bananas", state.collected_items)
+
+
 if __name__ == "__main__":
     unittest.main()

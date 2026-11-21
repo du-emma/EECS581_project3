@@ -7,12 +7,14 @@ import os
 import pygame
 
 import config
+from components.shopping_cart import ShoppingCart
 from screens.base_screen import draw_text
 
 
 class HudPlaceholders:
-    def __init__(self, state):
+    def __init__(self, state, show_clipboard=True, on_stock_changed=None):
         self.state = state
+        self.show_clipboard = show_clipboard
         self.timer_rect = pygame.Rect(24, 24, 180, 118)
         clipboard_path = os.path.join(config.STORE_DIR, "Clipboard.png")
         self.clipboard_image = pygame.image.load(clipboard_path).convert_alpha()
@@ -22,6 +24,7 @@ class HudPlaceholders:
         self.earnings_rect = pygame.Rect(
             config.WIDTH - 214, 24, 190, 86
         )
+        self.cart = ShoppingCart(state, self.earnings_rect, on_stock_changed)
 
     def draw(self, surface):
         self._draw_panel(surface, self.timer_rect)
@@ -50,7 +53,8 @@ class HudPlaceholders:
                 config.SELECTED,
             )
 
-        surface.blit(self.clipboard_image, self.clipboard_rect)
+        if self.show_clipboard:
+            surface.blit(self.clipboard_image, self.clipboard_rect)
 
         self._draw_panel(surface, self.earnings_rect)
         draw_text(
@@ -65,6 +69,10 @@ class HudPlaceholders:
             (self.earnings_rect.centerx, self.earnings_rect.top + 60),
             config.TEXT,
         )
+        self.cart.draw(surface)
+
+    def handle_event(self, event):
+        return self.cart.handle_event(event)
 
     @staticmethod
     def _draw_panel(surface, rect):

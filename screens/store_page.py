@@ -57,6 +57,9 @@ class StorePage(BaseScreen):
             self.expired_main_menu_button.handle_event(event)
             return
 
+        if not self.paused and self.hud.handle_event(event):
+            return
+
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.paused = not self.paused
             return

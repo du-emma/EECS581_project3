@@ -84,6 +84,23 @@ class ShoppingCartUITests(unittest.TestCase):
                     return shelf, index, item
         self.fail("aisle had no products to click")
 
+    def test_cart_panel_identifies_missing_and_incorrect_items(self):
+        self.state.set_order([
+            ({"item_id": 1, "item_name": "bananas"}, 2),
+            ({"item_id": 2, "item_name": "milk"}, 1),
+        ])
+        self.state.add_to_cart({"item_id": 1, "item_name": "bananas"})
+        self.state.add_to_cart({"item_id": 3, "item_name": "candy"})
+        self.state.toggle_cart()
+        self.cart._layout_panel()
+
+        lines = [text for text, _color in self.cart._validation_lines()]
+        self.assertFalse(any("Missing:" in t for t in lines))
+        self.assertTrue(any(t.startswith("Incorrect:") and "Candy" in t for t in lines))
+
+        surface = pygame.Surface((config.WIDTH, config.HEIGHT))
+        self.cart.draw(surface)
+
     def test_clicking_a_product_adds_one_unit_each_time(self):
         self.state.current_aisle_id = "produce"
         view = AisleView(self.state)

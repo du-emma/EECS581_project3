@@ -11,13 +11,16 @@ from screens.base_screen import draw_text
 
 ICON_SIZE = 70
 ICON_GAP = 12
-PANEL_WIDTH = 360
+PANEL_WIDTH = 380
 MAX_VISIBLE_ROWS = 6
 ROW_HEIGHT = 46
 HEADER_HEIGHT = 52
 FOOTER_HEIGHT = 70
+VALIDATION_LINE_H = 26
 PANEL_PAD = 16
 REMOVE_SIZE = (110, 36)
+INCORRECT_COLOR = (180, 55, 70)
+MATCH_COLOR = (52, 118, 62)
 
 
 class ShoppingCart:
@@ -126,14 +129,19 @@ class ShoppingCart:
         )
 
         items = self.state.cart_items()
+        result = self.state.validate_cart()
+        incorrect_ids = {entry["item_id"] for entry in result["incorrect"]}
+        ordered = {o["item_id"]: o["required_quantity"] for o in self.state.order_items}
+
         if not items:
             draw_text(
                 surface,
                 "Your cart is empty",
                 24,
-                (self.panel_rect.centerx, self.panel_rect.top + 88),
+                (self.panel_rect.centerx, self.panel_rect.top + 78),
                 config.TEXT_MUTED,
             )
+            self._draw_validation(surface)
             return
 
         clip = surface.get_clip()
@@ -142,25 +150,78 @@ class ShoppingCart:
         for button, entry, row_rect in zip(
             self._remove_buttons, visible, self._row_rects(len(visible))
         ):
-            label = f"{str(entry['item_name']).title()} ({entry['quantity']})"
+            required = ordered.get(entry["item_id"])
+            name = str(entry["item_name"]).title()
+            if required is None:
+                label = f"{name} ({entry['quantity']}) extra"
+                color = INCORRECT_COLOR
+            elif entry["item_id"] in incorrect_ids:
+                label = f"{name} ({entry['quantity']}) extra"
+                color = INCORRECT_COLOR
+            else:
+                label = f"{name} ({entry['quantity']})"
+                color = MATCH_COLOR if entry["quantity"] == required else config.TEXT
             font = pygame.font.Font(None, 24)
-            image = font.render(label, True, config.TEXT)
+            image = font.render(label, True, color)
             max_width = button.rect.left - row_rect.left - 16
             if image.get_width() > max_width > 0:
                 image = image.subsurface((0, 0, max_width, image.get_height()))
             surface.blit(image, image.get_rect(midleft=(row_rect.left + 12, row_rect.centery)))
             button.draw(surface)
         surface.set_clip(clip)
+        self._draw_validation(surface)
         self.clear_button.draw(surface)
+
+    def _validation_lines(self):
+        result = self.state.validate_cart()
+        if not self.state.order_items:
+            return []
+        if result["matches"]:
+            return [("Cart matches the order", MATCH_COLOR)]
+        if result["incorrect"]:
+            names = ", ".join(
+                f"{i['item_name'].title()} (+{i['extra']})"
+                for i in result["incorrect"]
+            )
+            return [(f"Incorrect: {names}", INCORRECT_COLOR)]
+        return []
+
+    def _validation_height(self):
+        n = len(self._validation_lines())
+        return n * VALIDATION_LINE_H + (8 if n else 0)
+
+    def _draw_validation(self, surface):
+        lines = self._validation_lines()
+        if not lines:
+            return
+        y = self.panel_rect.bottom - FOOTER_HEIGHT - self._validation_height() + 10
+        if not self.state.cart:
+            y = self.panel_rect.top + 100
+        for text, color in lines:
+            font = pygame.font.Font(None, 22)
+            image = font.render(text, True, color)
+            max_width = self.panel_rect.width - 2 * PANEL_PAD
+            if image.get_width() > max_width > 0:
+                image = image.subsurface((0, 0, max_width, image.get_height()))
+            surface.blit(
+                image,
+                image.get_rect(midtop=(self.panel_rect.centerx, y)),
+            )
+            y += VALIDATION_LINE_H
 
     def _layout_panel(self):
         items = self.state.cart_items()
         rows = min(len(items), MAX_VISIBLE_ROWS) if items else 1
-        height = HEADER_HEIGHT + rows * ROW_HEIGHT + (FOOTER_HEIGHT if items else 20)
+        validation_h = self._validation_height()
+        height = HEADER_HEIGHT + rows * ROW_HEIGHT + validation_h + (
+            FOOTER_HEIGHT if items else 24
+        )
         if not items:
-            height = 140
+            height = 130 + validation_h
         self.panel_rect.size = (PANEL_WIDTH, height)
         self.panel_rect.topright = (config.WIDTH - 24, self.icon_rect.bottom + 10)
+        if self.panel_rect.bottom > config.HEIGHT - 16:
+            self.panel_rect.bottom = config.HEIGHT - 16
         max_scroll = max(0, len(items) - MAX_VISIBLE_ROWS)
         self.scroll = min(self.scroll, max_scroll)
 

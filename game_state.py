@@ -232,6 +232,11 @@ class GameState:
         ordered = {o["item_id"] for o in self.order_items}
         return {e["item_name"] for i, e in self.cart.items() if i not in ordered}
 
+    @property
+    def incorrect_items(self):
+        """Names of off-list cart items and over-collected order items."""
+        return {entry["item_name"] for entry in self.validate_cart()["incorrect"]}
+
     def add_to_cart(self, item):
         """Add one unit of a shelf item. Stacks quantity for the same product."""
         item_id = item["item_id"]
@@ -276,9 +281,48 @@ class GameState:
     def close_cart(self):
         self.cart_open = False
 
+    def validate_cart(self):
+        """Compare the cart to the order and list missing vs incorrect items.
+
+        Missing: ordered products the cart is short on (including qty 0).
+        Incorrect: off-list products, or extra units beyond what the order asked for.
+        """
+        ordered = {o["item_id"]: o for o in self.order_items}
+        missing = []
+        for o in self.order_items:
+            collected = self.collected_quantity(o["item_id"])
+            required = o["required_quantity"]
+            if collected < required:
+                missing.append({
+                    "item_id": o["item_id"],
+                    "item_name": o["item_name"],
+                    "required": required,
+                    "collected": collected,
+                    "shortfall": required - collected,
+                })
+
+        incorrect = []
+        for item_id, entry in self.cart.items():
+            required = ordered[item_id]["required_quantity"] if item_id in ordered else 0
+            extra = entry["quantity"] - required
+            if extra > 0:
+                incorrect.append({
+                    "item_id": item_id,
+                    "item_name": entry["item_name"],
+                    "quantity": entry["quantity"],
+                    "extra": extra,
+                    "on_order": item_id in ordered,
+                })
+
+        return {
+            "matches": bool(self.order_items) and not missing and not incorrect,
+            "missing": missing,
+            "incorrect": incorrect,
+        }
+
     def calculate_accuracy(self):
         """True when the cart matches the order exactly (no missing, no extra)."""
-        return bool(self.order_items) and self.wrong_unit_count == 0
+        return self.validate_cart()["matches"]
 
     @property
     def tip(self):

@@ -90,7 +90,7 @@ class StorePage(BaseScreen):
             overlay.fill((0, 0, 0, 170))
             surface.blit(overlay, (0, 0))
 
-            popup_rect = pygame.Rect(0, 0, 420, 300)
+            popup_rect = pygame.Rect(0, 0, 520, 400)
             popup_rect.center = (config.WIDTH // 2, config.HEIGHT // 2)
             pygame.draw.rect(surface, config.CARD, popup_rect, border_radius=16)
             pygame.draw.rect(
@@ -100,15 +100,22 @@ class StorePage(BaseScreen):
                 surface,
                 "Time's Up!",
                 config.HEADING_SIZE,
-                (popup_rect.centerx, popup_rect.top + 55),
+                (popup_rect.centerx, popup_rect.top + 48),
                 config.ACCENT,
             )
             draw_text(
                 surface,
                 f"You earned ${self.state.earnings:.2f}",
                 config.BODY_SIZE,
-                (popup_rect.centerx, popup_rect.top + 105),
+                (popup_rect.centerx, popup_rect.top + 92),
                 config.TEXT,
+            )
+            self._draw_order_result(surface, popup_rect)
+            self.play_again_button.rect.center = (
+                popup_rect.centerx, popup_rect.bottom - 108
+            )
+            self.expired_main_menu_button.rect.center = (
+                popup_rect.centerx, popup_rect.bottom - 44
             )
             self.play_again_button.draw(surface)
             self.expired_main_menu_button.draw(surface)
@@ -125,3 +132,37 @@ class StorePage(BaseScreen):
             )
             self.continue_button.draw(surface)
             self.main_menu_button.draw(surface)
+
+    def _draw_order_result(self, surface, popup_rect):
+        result = self.state.validate_cart()
+        if result["matches"]:
+            draw_text(
+                surface,
+                "Cart matches the order",
+                26,
+                (popup_rect.centerx, popup_rect.top + 140),
+                (52, 118, 62),
+            )
+            return
+
+        if result["incorrect"]:
+            names = ", ".join(
+                f"{i['item_name'].title()} (+{i['extra']})"
+                for i in result["incorrect"]
+            )
+            self._draw_result_line(
+                surface,
+                f"Incorrect: {names}",
+                popup_rect.top + 140,
+                (180, 55, 70),
+                popup_rect,
+            )
+
+    @staticmethod
+    def _draw_result_line(surface, text, y, color, popup_rect):
+        font = pygame.font.Font(None, 24)
+        image = font.render(text, True, color)
+        max_width = popup_rect.width - 40
+        if image.get_width() > max_width > 0:
+            image = image.subsurface((0, 0, max_width, image.get_height()))
+        surface.blit(image, image.get_rect(center=(popup_rect.centerx, y)))

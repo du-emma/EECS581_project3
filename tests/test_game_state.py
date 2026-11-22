@@ -242,5 +242,79 @@ class GameStateCartTests(unittest.TestCase):
         self.assertNotIn("bananas", state.collected_items)
 
 
+class GameStateCartValidationTests(unittest.TestCase):
+    def test_empty_cart_lists_every_ordered_item_as_missing(self):
+        state = GameState()
+        _order(state, (MILK, 2), (EGGS, 1))
+
+        result = state.validate_cart()
+        self.assertFalse(result["matches"])
+        self.assertEqual(
+            [(m["item_name"], m["shortfall"]) for m in result["missing"]],
+            [("milk", 2), ("eggs", 1)],
+        )
+        self.assertEqual(result["incorrect"], [])
+
+    def test_partial_quantity_is_missing_not_incorrect(self):
+        state = GameState()
+        _order(state, (MILK, 2))
+        state.add_to_cart(MILK)
+
+        result = state.validate_cart()
+        self.assertEqual(result["missing"][0]["collected"], 1)
+        self.assertEqual(result["missing"][0]["shortfall"], 1)
+        self.assertEqual(result["incorrect"], [])
+
+    def test_off_list_item_is_incorrect(self):
+        state = GameState()
+        _order(state, (MILK, 1))
+        state.add_to_cart(MILK)
+        state.add_to_cart(CANDY)
+
+        result = state.validate_cart()
+        self.assertFalse(result["matches"])
+        self.assertEqual(result["missing"], [])
+        self.assertEqual(result["incorrect"][0]["item_name"], "candy")
+        self.assertFalse(result["incorrect"][0]["on_order"])
+        self.assertIn("candy", state.incorrect_items)
+
+    def test_extra_units_of_an_ordered_item_are_incorrect(self):
+        state = GameState()
+        _order(state, (MILK, 1))
+        state.add_to_cart(MILK)
+        state.add_to_cart(MILK)
+
+        result = state.validate_cart()
+        self.assertEqual(result["missing"], [])
+        self.assertEqual(result["incorrect"][0]["extra"], 1)
+        self.assertTrue(result["incorrect"][0]["on_order"])
+        self.assertIn("milk", state.incorrect_items)
+
+    def test_exact_cart_matches_the_order(self):
+        state = GameState()
+        _order(state, (MILK, 2), (EGGS, 1))
+        state.add_to_cart(MILK)
+        state.add_to_cart(MILK)
+        state.add_to_cart(EGGS)
+
+        result = state.validate_cart()
+        self.assertTrue(result["matches"])
+        self.assertEqual(result["missing"], [])
+        self.assertEqual(result["incorrect"], [])
+        self.assertTrue(state.calculate_accuracy())
+
+    def test_missing_and_incorrect_together(self):
+        state = GameState()
+        _order(state, (MILK, 2), (EGGS, 1), (BREAD, 1))
+        state.add_to_cart(MILK)
+        state.add_to_cart(CANDY)
+
+        result = state.validate_cart()
+        missing_names = {m["item_name"] for m in result["missing"]}
+        self.assertEqual(missing_names, {"milk", "eggs", "bread"})
+        self.assertEqual({i["item_name"] for i in result["incorrect"]}, {"candy"})
+        self.assertFalse(result["matches"])
+
+
 if __name__ == "__main__":
     unittest.main()

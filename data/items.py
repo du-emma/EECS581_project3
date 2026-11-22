@@ -1,7 +1,7 @@
 # Owner: Emma R
 # Query helpers for grocery items in the SQLite database.
 
-from data.db import execute, fetch_all
+from data.db import ITEMS, execute, fetch_all, get_connection
 
 
 def get_all_aisles():
@@ -105,3 +105,20 @@ def increment_stock(item_id, amount=1):
     )
     item["stock_quantity"] += amount
     return item
+
+
+def restock_all():
+    """Reset every item's stock to its starting amount.
+
+    Called when a new shopping session starts, so stock taken by earlier
+    sessions (or earlier runs of the game) can't make an order impossible.
+    """
+    conn = get_connection()
+    try:
+        conn.executemany(
+            "UPDATE items SET stock_quantity = ? WHERE item_name = ?",
+            [(stock, name) for name, _aisle, _price, stock in ITEMS],
+        )
+        conn.commit()
+    finally:
+        conn.close()

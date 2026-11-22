@@ -7,6 +7,7 @@ import pygame
 import game_state
 import config
 from screens.base_screen import BaseScreen, MenuButton, draw_text
+from components.checklist import Checklist
 from components.hud_placeholders import HudPlaceholders
 from components.shelf import Shelf
 from data.aisles import get_aisle, get_aisle_items
@@ -25,6 +26,10 @@ class AisleView(BaseScreen):
             for row in range(3)
         ]
         self._stock_shelves()
+        # R10: the clipboard doesn't fit beside the shelves, so show a strip below them.
+        self.checklist = Checklist()
+        self.checklist_rect = pygame.Rect(0, 0, config.WIDTH - 196 - 24, 74)
+        self.checklist_rect.topleft = (196, config.HEIGHT - 86)
         self.hud = HudPlaceholders(
             state,
             show_clipboard=False,
@@ -92,5 +97,5 @@ class AisleView(BaseScreen):
         for shelf in self.shelves:
             shelf.draw(surface)
         self.back_button.draw(surface)
+        self.checklist.draw_compact(surface, self.state, self.checklist_rect)
         self.hud.draw(surface)
-

@@ -1,9 +1,29 @@
 ﻿import unittest
+from unittest.mock import patch
 
 from game_state import AVATAR_SELECT, STORE, GameState
 
+MILK = {"item_id": 1, "item_name": "milk"}
+EGGS = {"item_id": 2, "item_name": "eggs"}
+BREAD = {"item_id": 3, "item_name": "bread"}
+CHEESE = {"item_id": 4, "item_name": "cheese"}
+CANDY = {"item_id": 99, "item_name": "candy"}
+PRODUCTS = [MILK, EGGS, BREAD, CHEESE, {"item_id": 5, "item_name": "flour"}]
+
+
+def _order(state, *pairs):
+    """Give the state a fixed order: _order(state, (MILK, 2), (EGGS, 1))."""
+    state.set_order(list(pairs))
+
 
 class GameStateOrderTests(unittest.TestCase):
+    def setUp(self):
+        # Keep unit tests off the real database (no restock, fixed product list).
+        for target, value in (("_restock", None), ("_available_items", PRODUCTS)):
+            p = patch.object(GameState, target, return_value=value)
+            p.start()
+            self.addCleanup(p.stop)
+
     def test_start_game_starts_timer_and_selects_avatar(self):
         state = GameState()
 
@@ -27,8 +47,8 @@ class GameStateOrderTests(unittest.TestCase):
     def test_timer_expires_freezes_and_settles_without_reset(self):
         state = GameState()
         state.start_game()
-        state.set_grocery_list(["milk"])
-        state.add_collected_item("milk")
+        _order(state, (MILK, 1))
+        state.add_to_cart(MILK)
 
         state.update(60)
         self.assertEqual(state.elapsed, 60)
@@ -44,27 +64,38 @@ class GameStateOrderTests(unittest.TestCase):
         self.assertFalse(state.calculate_accuracy())
         self.assertEqual(state.tip, 0)
 
-        state.set_grocery_list(["milk", "eggs"])
-        state.add_collected_item("milk")
+        _order(state, (MILK, 1), (EGGS, 1))
+        state.add_to_cart(MILK)
         self.assertFalse(state.calculate_accuracy())
         self.assertEqual(state.tip, 0)
 
-        state.add_collected_item("eggs")
+        state.add_to_cart(EGGS)
         self.assertTrue(state.calculate_accuracy())
         self.assertEqual(state.tip, 5)
 
-        state.add_extra_item("candy")
+        state.add_to_cart(CANDY)
         self.assertFalse(state.calculate_accuracy())
         self.assertEqual(state.tip, 0)
-        state.remove_collected_item("candy")
+        state.remove_from_cart(CANDY["item_id"])
         self.assertTrue(state.calculate_accuracy())
+
+    def test_accuracy_requires_exact_quantities(self):
+        state = GameState()
+        _order(state, (MILK, 2))
+        state.add_to_cart(MILK)
+        self.assertFalse(state.calculate_accuracy())      # under
+        state.add_to_cart(MILK)
+        self.assertTrue(state.calculate_accuracy())       # exact
+        state.add_to_cart(MILK)
+        self.assertFalse(state.calculate_accuracy())      # over
+        self.assertEqual(state.penalty, 5)
 
     def test_missing_and_incorrect_items_each_reduce_earnings_by_five(self):
         state = GameState()
         state.start_game()
-        state.set_grocery_list(["milk", "eggs", "bread"])
-        state.add_collected_item("milk")
-        state.add_collected_item("candy")
+        _order(state, (MILK, 1), (EGGS, 1), (BREAD, 1))
+        state.add_to_cart(MILK)
+        state.add_to_cart(CANDY)
 
         state.update(60)
 
@@ -76,8 +107,8 @@ class GameStateOrderTests(unittest.TestCase):
     def test_earnings_never_go_below_zero(self):
         state = GameState()
         state.start_game()
-        state.set_grocery_list(["milk", "eggs", "bread", "cheese"])
-        state.add_collected_item("candy")
+        _order(state, (MILK, 1), (EGGS, 1), (BREAD, 1), (CHEESE, 1))
+        state.add_to_cart(CANDY)
 
         state.update(60)
 
@@ -87,8 +118,8 @@ class GameStateOrderTests(unittest.TestCase):
     def test_play_again_preserves_avatar_resets_timer_and_generates_list(self):
         state = GameState()
         state.choose_avatar("ava")
-        state.set_grocery_list(["milk", "eggs"])
         state.start_game()
+        first_order_id = state.order_id
         state.update(60)
 
         state.play_again()
@@ -99,6 +130,8 @@ class GameStateOrderTests(unittest.TestCase):
         self.assertEqual(state.remaining, 60)
         self.assertFalse(state.order_expired)
         self.assertTrue(state.required_items)
+        self.assertTrue(state.order_items)
+        self.assertNotEqual(state.order_id, first_order_id)
 
     def test_expiration_returns_to_store_for_popup(self):
         state = GameState()
@@ -112,9 +145,9 @@ class GameStateOrderTests(unittest.TestCase):
 
     def test_non_required_collected_item_counts_as_extra(self):
         state = GameState()
-        state.set_grocery_list(["milk"])
-        state.add_collected_item("milk")
-        state.add_collected_item("candy")
+        _order(state, (MILK, 1))
+        state.add_to_cart(MILK)
+        state.add_to_cart(CANDY)
 
         self.assertFalse(state.calculate_accuracy())
         self.assertIn("candy", state.extra_items)
@@ -197,7 +230,7 @@ class GameStateCartTests(unittest.TestCase):
 
     def test_cart_stays_in_sync_with_collected_items(self):
         state = GameState()
-        state.set_grocery_list(["bananas"])
+        state.set_order([(self._item(1, "bananas"), 1)])
         state.add_to_cart(self._item(1, "bananas"))
         state.add_to_cart(self._item(2, "candy"))
         self.assertIn("bananas", state.collected_items)

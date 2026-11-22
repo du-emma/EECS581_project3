@@ -8,6 +8,7 @@ import pygame
 
 import config
 from components.shopping_cart import ShoppingCart
+from components.checklist import Checklist 
 from screens.base_screen import draw_text
 
 
@@ -25,6 +26,7 @@ class HudPlaceholders:
             config.WIDTH - 214, 24, 190, 86
         )
         self.cart = ShoppingCart(state, self.earnings_rect, on_stock_changed)
+        self.checklist = Checklist()
 
     def draw(self, surface):
         self._draw_panel(surface, self.timer_rect)
@@ -55,6 +57,7 @@ class HudPlaceholders:
 
         if self.show_clipboard:
             surface.blit(self.clipboard_image, self.clipboard_rect)
+            self.checklist.draw_in_rect(surface, self.state, self.clipboard_rect)
 
         self._draw_panel(surface, self.earnings_rect)
         draw_text(
